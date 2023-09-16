@@ -1,4 +1,4 @@
-name: Deploy and Test
+name: deploy and test
 
 on:
   repository_dispatch:

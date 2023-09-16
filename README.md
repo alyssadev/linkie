@@ -1,4 +1,4 @@
-linkie
+linkie [![deploy and test](https://github.com/alyssadev/linkie/actions/workflows/main.yml/badge.svg)](https://github.com/alyssadev/linkie/actions/workflows/main.yml)
 ======
 
 A simple url shortener. Largely adapting [VandyHacks/vhl.ink](https://github.com/VandyHacks/vhl.ink) with the aim of providing a more ptpb-like experience (i.e the fewest keystrokes from a cli possible while still being reasonably secure for private use)
