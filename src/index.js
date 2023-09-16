@@ -2,7 +2,7 @@
 
 function makeid(length) {
     let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
     const charactersLength = characters.length;
     let counter = 0;
     while (counter < length) {
@@ -45,12 +45,14 @@ async function add(host,path,request) {
             x += 1
         }
     }
+    path = path.toLowerCase()
     await KV.put(path, dest)
     return new Response(`https://${host}/${path}`, {status:201})
 }
 
 async function remove(host,path) {
     if (!path) return new Response("No path provided",{status:400})
+    path = path.toLowerCase()
     await KV.delete(path)
     return new Response(`DELETE https://${host}/${path}`, {status:200})
 }
@@ -63,6 +65,7 @@ async function get(host,path,auth) {
         return new Response(paths,{status:200})
     }
     if (!path) return Response.redirect("https://aly-smith.carrd.co",301)
+    path = path.toLowerCase()
     const dest = await KV.get(path)
     if (dest) return Response.redirect(dest, 302)
     return new Response("Path not found", {status:404})
