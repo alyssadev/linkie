@@ -11,7 +11,17 @@ Deploying
 Usage
 -----
 
-`curl -n -d u=http://example.com linkie/path` will make `http://linkie/path` 302 redirect to the provided url. use .netrc to store the auth username/password (inspired by ix.io)
+`curl -n -d u=http://example.com linkie/path` will make `http://linkie/path` 302 redirect to the provided url. use .netrc to store the auth username/password (inspired by ix.io). Yes it supports emoji
+
+`curl -n -F 'u=<-' linkie/path` will make the path 302 redirect to the url provided on stdin. Doesn't support more than one url or anything that's not a url. For instance:
+
+```
+curl -F 'u=<-' linkie/_ <<EOF
+http://example.com
+http://example.com?2
+EOF
+linkie/path => http://example.comhttp//example.com?2
+```
 
 `curl -n -d u=http://example.com linkie/_`, if you provide an underscore as the path linkie will generate a four character path from a-zA-Z. if it has a collision five times in a row it'll return 500.. at that point i'd probably increase the length of the random ids in the function at the top of index.js to 5 or something, and also i should get off the internet because i've generated 52^4 short urls with this service and that's insane
 
