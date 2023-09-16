@@ -20,6 +20,7 @@ jobs:
         env:
             AUTH_KEY: ${{ secrets.AUTH_KEY }}
   test:
+    needs: deploy
     runs-on: ubuntu-latest
     name: Test
     environment: Cloudflare Worker
