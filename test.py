@@ -2,8 +2,8 @@
 from requests import get,put,post,delete,patch,request
 from os import environ
 
-host = environ.get("HOST", "https://linkie.alyssa-dev-smith.workers.dev")
-auth = {"Authorization": environ.get("AUTH", "")}
+host = environ.get("HOST", "https://linkie.username.workers.dev")
+auth = {"Authorization": environ.get("AUTH_KEY", "")}
 path = environ.get("TEST_PATH", "/devtestpath")
 
 try:
