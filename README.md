@@ -10,6 +10,8 @@ Deploying
 
 Come up with a `username:password`, base64 encode them, add them to a secret as `AUTH_KEY = Basic $secret`, create a new KV namespace called KV, then `wrangler deploy`
 
+Alternatively, get your AUTH\_KEY, click the Deploy to Cloudflare Workers button above, once it's forked the repo go there and set up your Actions secrets and variables in Settings &gt; Security, with AUTH\_KEY and CF\_API\_TOKEN as secrets and DEPLOY\_HOST as the domain you're hosting linkie on (defaulting to <https://linkie.your-username.workers.dev>)
+
 Usage
 -----
 
