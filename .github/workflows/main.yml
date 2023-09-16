@@ -8,6 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     name: Deploy
+    environment: Cloudflare Worker
     steps:
       - uses: actions/checkout@master
       - name: Publish
