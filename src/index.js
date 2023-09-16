@@ -64,7 +64,7 @@ async function get(host,path,auth) {
         keys.forEach(element => paths += `${element.name}\n`);
         return new Response(paths,{status:200})
     }
-    if (!path) return Response.redirect("https://aly-smith.carrd.co",301)
+    if (!path) return Response.redirect(REDIR_URL,301)
     path = path.toLowerCase()
     const dest = await KV.get(path)
     if (dest) return Response.redirect(dest, 302)
