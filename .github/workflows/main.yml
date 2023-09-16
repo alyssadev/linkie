@@ -1,3 +1,5 @@
+name: Deploy and Test
+
 on:
   repository_dispatch:
   push:
