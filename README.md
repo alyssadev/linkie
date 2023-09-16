@@ -6,7 +6,7 @@ A simple url shortener. Largely adapting [VandyHacks/vhl.ink](https://github.com
 Deploying
 ---------
 
-`wrangler deploy`
+Come up with a `username:password`, base64 encode them, add them to a secret as `AUTH_KEY = Basic $secret`, create a new KV namespace called KV, then `wrangler deploy`
 
 Usage
 -----
