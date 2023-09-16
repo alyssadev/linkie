@@ -1,0 +1,6 @@
+name = "linkie"
+main = "src/index.js"
+compatibility_date = "2023-09-14"
+kv_namespaces = [
+  { binding = "KV", id = "7214e776a3da4ccd9f9fe5b6c3d3f781" }
+]
