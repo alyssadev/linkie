@@ -1,5 +1,6 @@
 name = "linkie"
 main = "src/index.js"
+workers_dev = true # used for test.py
 compatibility_date = "2023-09-14"
 routes = [
   { pattern = "s.aly.pet", custom_domain = true }
