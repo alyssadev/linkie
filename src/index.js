@@ -92,7 +92,12 @@ async function get(request,host,path) {
         const headers = new Headers()
         dest_file.writeHttpMetadata(headers)
         headers.set("etag", dest_file.httpEtag)
-        headers.set("content-type", mime)
+        if (mime.startsWith("text/")) {
+            headers.set("content-type", "text/plain")
+            headers.set("x-content-type", mime)
+        } else {
+            headers.set("content-type", mime)
+        }
         return new Response(dest_file.body, { headers, } )
     }
     const dest = await KV.get(path)
