@@ -12,16 +12,21 @@ function makeid(length) {
     return result;
 }
 
-function checkAuth(request) {
+async function checkAuth(request) {
     const auth = request.headers.get("Authorization");
-    return auth === AUTH_KEY;
+    const auth_check = await AUTH.get(auth)
+    console.log(auth, auth_check)
+    return Boolean(auth_check);
 }
 
 function getHost(request) {
     return request.headers.get("Host")
 }
 
-async function add(host,path,request) {
+async function add(request,host,path) {
+    const auth = await checkAuth(request)
+    if (!auth)
+        return new Response("Only GET requests allowed to unauthed users", {status:403});
     if (!request.headers.get("content-type"))
         return new Response("No URL provided", {status:400})
     const data = await request.formData()
@@ -50,14 +55,18 @@ async function add(host,path,request) {
     return new Response(`https://${host}/${path}`, {status:201})
 }
 
-async function remove(host,path) {
+async function remove(request,host,path) {
+    const auth = await checkAuth(request)
+    if (!auth)
+        return new Response("Only GET requests allowed to unauthed users", {status:403});
     if (!path) return new Response("No path provided",{status:400})
     path = path.toLowerCase()
     await KV.delete(path)
     return new Response(`DELETE https://${host}/${path}`, {status:200})
 }
 
-async function get(host,path,auth) {
+async function get(request,host,path) {
+    const auth = await checkAuth(request)
     if (!path && auth) {
         const { keys } = await KV.list()
         let paths = ""
@@ -79,16 +88,12 @@ async function handleRequest(request) {
         case "PUT":
         case "POST":
         case "PATCH":
-            if (!checkAuth(request))
-                return new Response("Only GET requests allowed to unauthed users", {status:403});
-            return add(host,path,request)
+            return add(request,host,path)
         case "DELETE":
-            if (!checkAuth(request))
-                return new Response("Only GET requests allowed to unauthed users", {status:403});
-            return remove(host,path)
+            return remove(request,host,path)
         case "HEAD":
         case "GET":
-            return get(host,path,checkAuth(request))
+            return get(request,host,path)
         default:
             return new Response("Method not allowed", {status:405})
     }
