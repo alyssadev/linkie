@@ -57,12 +57,10 @@ async function add(request,host,path) {
         return new Response(`https://${host}/${path}`, {status:201})
     } catch (e) {
         if (e instanceof TypeError) {
+            if (!dest) return new Response("No file provided", {status:400})
             await FILES.put(path, dest)
-            var type = dest.type
-            if (type === "undefined") type = "text/plain" // dammit sharex
             await KV.put(path,dest.type)
             return new Response(`https://${host}/${path}`, {status:201})
-//          return new Response("No valid URL provided",{status:400});
         }
         else throw e;
     };
