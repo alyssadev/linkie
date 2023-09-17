@@ -5,7 +5,6 @@ from mimetypes import guess_type
 
 host = environ.get("DEPLOY_HOST", "https://linkie.username.workers.dev")
 auth = {"Authorization": environ.get("AUTH_KEY", "")}
-path = environ.get("TEST_PATH", "/devtestpath")
 print(f"Running tests on {host}")
 
 try:
@@ -26,11 +25,11 @@ try:
     assert all(req.status_code == 403 for req in reqs) # unauth requests to auth methods
     
     # auth put wo data
-    req = put(host + path,data={},headers=auth)
+    req = put(host + "/devtestpath",data={},headers=auth)
     assert req.status_code == 400 # auth put wo data
     
 #    # auth put invalid url
-#    req = put(host + path,data={"u": "golf sale"},headers=auth)
+#    req = put(host + "/devtestpath",data={"u": "golf sale"},headers=auth)
 #    assert req.status_code == 400 # auth put invalid url
 #    # invalid urls would now be stored as files instead
     
@@ -39,9 +38,9 @@ try:
     assert req.status_code == 400 # auth put wo path
     
     # auth put valid
-    req = put(host + path,data={"u": "http://www.example.com/?put"},headers=auth)
+    req = put(host + "/devtestpath",data={"u": "http://www.example.com/?put"},headers=auth)
     assert req.status_code == 201 # auth put valid
-    req = get(host + path, allow_redirects=False)
+    req = get(host + "/devtestpath", allow_redirects=False)
     assert req.status_code == 302 and req.headers["location"] == "http://www.example.com/?put"
     
     # auth delete wo path
@@ -49,9 +48,9 @@ try:
     assert req.status_code == 400 # auth delete wo path
     
     # auth delete valid
-    req = delete(host + path,headers=auth)
+    req = delete(host + "/devtestpath",headers=auth)
     assert req.status_code == 200 # auth delete valid
-#    req = get(host + path, allow_redirects=False)
+#    req = get(host + "/devtestpath", allow_redirects=False)
 #    assert req.status_code == 404
 
     # auth put file valid
@@ -59,9 +58,9 @@ try:
     mime = guess_type(fn)[0]
     with open(fn, "rb") as f:
         files = {'u': (fn, f, mime)}
-        req = put(host + path,headers=auth,files=files)
+        req = put(host + "/devtestpatha",headers=auth,files=files)
     assert req.status_code == 201 # auth put file valid
-    req = get(host + path, allow_redirects=False)
+    req = get(host + "/devtestpatha", allow_redirects=False)
     assert req.status_code == 200 and req.headers["content-type"] == mime
 
 except AssertionError:
