@@ -9,5 +9,9 @@ kv_namespaces = [
   { binding = "KV", id = "7214e776a3da4ccd9f9fe5b6c3d3f781", preview_id = "a36f8dde95cb46d988812e051729fbe8" },
   { binding = "AUTH", id = "6cea477e20a44fb5933482255fc77447", preview_id = "1cd25bb358194925ad1ba2cf163c80c0" }
 ]
+r2_buckets = [
+  { binding = "FILES", bucket_name = "files", preview_bucket_name = "files-preview" }
+]
+
 [vars]
 REDIR_URL = "https://aly-smith.carrd.co/"

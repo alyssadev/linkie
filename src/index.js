@@ -28,17 +28,7 @@ async function add(request,host,path) {
     if (!auth)
         return new Response("Only GET requests allowed to unauthed users", {status:403});
     if (!request.headers.get("content-type"))
-        return new Response("No URL provided", {status:400})
-    const data = await request.formData()
-    const dest = data.get("u")
-    if (!dest) return new Response("No URL provided",{status:400})
-    try {
-        new URL(dest)
-    } catch (e) {
-        if (e instanceof TypeError)
-            return new Response("No valid URL provided",{status:400});
-        else throw e;
-    };
+        return new Response("No data provided", {status:400})
     if (!path) return new Response("No path provided",{status:400})
     if (path === "_") {
         var x = 0
@@ -51,8 +41,27 @@ async function add(request,host,path) {
         }
     }
     path = path.toLowerCase()
-    await KV.put(path, dest)
-    return new Response(`https://${host}/${path}`, {status:201})
+
+    // URL shortening
+    const data = await request.formData()
+    const dest = data.get("u")
+    console.log(dest)
+    try {
+        new URL(dest)
+        await KV.put(path, dest)
+        await FILES.delete(path)
+        return new Response(`https://${host}/${path}`, {status:201})
+    } catch (e) {
+        if (e instanceof TypeError) {
+//          await FILES.put(path, request.body)
+//          await KV.delete(path)
+//          return new Response(`https://${host}/${path}`, {status:201})
+            return new Response("No valid URL provided",{status:400});
+        }
+        else throw e;
+    };
+    
+    return new Response(`No URL or file provided`, {status:400})
 }
 
 async function remove(request,host,path) {
@@ -62,6 +71,7 @@ async function remove(request,host,path) {
     if (!path) return new Response("No path provided",{status:400})
     path = path.toLowerCase()
     await KV.delete(path)
+    await FILES.delete(path)
     return new Response(`DELETE https://${host}/${path}`, {status:200})
 }
 
@@ -75,15 +85,26 @@ async function get(request,host,path) {
     }
     if (!path) return Response.redirect(REDIR_URL,301)
     path = path.toLowerCase()
+
+    // URL shortening
     const dest = await KV.get(path)
     if (dest) return Response.redirect(dest, 302)
-    return new Response("Path not found", {status:404})
+
+    // File uploading
+    const dest_file = await FILES.get(path)
+    if (!dest_file) return new Response("Path not found", {status:404})
+    const headers = new Headers()
+    dest_file.writeHttpMetadata(headers)
+    headers.set("etag", object.httpEtag)
+    return new Response(object.body, { headers, } )
 }
 
 async function handleRequest(request) {
     const host = getHost(request)
     const url = new URL(request.url)
-    var path = url.pathname.split("/")[1]
+    var pathname = url.pathname.split("/")
+    var path = pathname[1]
+//    if (pathname.length > 2) var
     switch (request.method) {
         case "PUT":
         case "POST":
