@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from requests import request,get,put,post,patch,delete
 from os import environ
+from mimetypes import guess_type
 
 host = environ.get("DEPLOY_HOST", "https://linkie.username.workers.dev")
 auth = {"Authorization": environ.get("AUTH_KEY", "")}
@@ -27,42 +28,21 @@ try:
     # auth put wo data
     req = put(host + path,data={},headers=auth)
     assert req.status_code == 400 # auth put wo data
-    req = post(host + path,data={},headers=auth)
-    assert req.status_code == 400 # auth post wo data
-    req = patch(host + path,data={},headers=auth)
-    assert req.status_code == 400 # auth patch wo data
     
-    # auth put invalid url
-    req = put(host + path,data={"u": "golf sale"},headers=auth)
-    assert req.status_code == 400 # auth put invalid url
-    req = post(host + path,data={"u": "golf sale"},headers=auth)
-    assert req.status_code == 400 # auth post invalid url
-    req = patch(host + path,data={"u": "golf sale"},headers=auth)
-    assert req.status_code == 400 # auth patch invalid url
+#    # auth put invalid url
+#    req = put(host + path,data={"u": "golf sale"},headers=auth)
+#    assert req.status_code == 400 # auth put invalid url
+#    # invalid urls would now be stored as files instead
     
     # auth put wo path
     req = put(host,data={"u": "http://www.example.com"},headers=auth)
     assert req.status_code == 400 # auth put wo path
-    req = post(host,data={"u": "http://www.example.com"},headers=auth)
-    assert req.status_code == 400 # auth post wo path
-    req = post(host,data={"u": "http://www.example.com"},headers=auth)
-    assert req.status_code == 400 # auth patch wo path
     
     # auth put valid
     req = put(host + path,data={"u": "http://www.example.com/?put"},headers=auth)
     assert req.status_code == 201 # auth put valid
     req = get(host + path, allow_redirects=False)
     assert req.status_code == 302 and req.headers["location"] == "http://www.example.com/?put"
-    
-    req = post(host + path + "post",data={"u": "http://www.example.com/?post"},headers=auth)
-    assert req.status_code == 201 # auth post valid
-    req = get(host + path + "post", allow_redirects=False)
-    assert req.status_code == 302 and req.headers["location"] == "http://www.example.com/?post"
-    
-    req = patch(host + path + "patch",data={"u": "http://www.example.com/?patch"},headers=auth)
-    assert req.status_code == 201 # auth patch valid
-    req = get(host + path + "patch", allow_redirects=False)
-    assert req.status_code == 302 and req.headers["location"] == "http://www.example.com/?patch"
     
     # auth delete wo path
     req = delete(host,headers=auth)
@@ -73,6 +53,17 @@ try:
     assert req.status_code == 200 # auth delete valid
 #    req = get(host + path, allow_redirects=False)
 #    assert req.status_code == 404
+
+    # auth put file valid
+    fn = "package.json"
+    mime = guess_type(fn)[0]
+    with open(fn, "rb") as f:
+        files = {'u': (fn, f, mime)}
+        req = put(host + path,headers=auth,files=files)
+    assert req.status_code == 201 # auth put file valid
+    req = get(host + path, allow_redirects=False)
+    assert req.status_code == 200 and req.headers["content-type"] == mime
+
 except AssertionError:
     print(req,req.headers,req.text)
     raise

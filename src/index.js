@@ -53,10 +53,10 @@ async function add(request,host,path) {
         return new Response(`https://${host}/${path}`, {status:201})
     } catch (e) {
         if (e instanceof TypeError) {
-//          await FILES.put(path, request.body)
-//          await KV.delete(path)
-//          return new Response(`https://${host}/${path}`, {status:201})
-            return new Response("No valid URL provided",{status:400});
+            await FILES.put(path, dest)
+            await KV.put(path,dest.type)
+            return new Response(`https://${host}/${path}`, {status:201})
+//          return new Response("No valid URL provided",{status:400});
         }
         else throw e;
     };
@@ -86,17 +86,18 @@ async function get(request,host,path) {
     if (!path) return Response.redirect(REDIR_URL,301)
     path = path.toLowerCase()
 
-    // URL shortening
+    const dest_file = await FILES.get(path)
+    if (dest_file) {
+        const mime = await KV.get(path)
+        const headers = new Headers()
+        dest_file.writeHttpMetadata(headers)
+        headers.set("etag", dest_file.httpEtag)
+        headers.set("content-type", mime)
+        return new Response(dest_file.body, { headers, } )
+    }
     const dest = await KV.get(path)
     if (dest) return Response.redirect(dest, 302)
-
-    // File uploading
-    const dest_file = await FILES.get(path)
-    if (!dest_file) return new Response("Path not found", {status:404})
-    const headers = new Headers()
-    dest_file.writeHttpMetadata(headers)
-    headers.set("etag", object.httpEtag)
-    return new Response(object.body, { headers, } )
+    return new Response("Path not found", {status:404})
 }
 
 async function handleRequest(request) {
