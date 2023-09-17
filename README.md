@@ -5,12 +5,21 @@ A simple url shortener. Largely adapting [VandyHacks/vhl.ink](https://github.com
 
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/alyssadev/linkie)
 
+(I'm not sure how this button works, there's some setting up of KV namespaces necessary, I'd recommend following the below instructions)
+
 Deploying
 ---------
 
-Come up with a `username:password`, base64 encode them, add them to a secret as `AUTH_KEY = Basic $secret`, create a new KV namespace called KV, then `wrangler deploy`
-
-Alternatively, get your AUTH\_KEY, click the Deploy to Cloudflare Workers button above, once it's forked the repo go there and set up your Actions secrets and variables in Settings &gt; Security, with AUTH\_KEY and CF\_API\_TOKEN as secrets and DEPLOY\_HOST as the domain you're hosting linkie on (defaulting to <https://linkie.your-username.workers.dev>)
+* Come up with a username and password. Write them to `~/.netrc` for your target domain. e.g `machine linkie.username.workers.dev username person password password1`
+* Take your username and password as `username:password`, base64 encode that string and add "Basic " at the start, this is `$AUTH_KEY`
+* `wrangler kv:namespace create KV`
+* `wrangler kv:namespace create AUTH`
+* `wrangler kv:key put --binding AUTH "$AUTH_KEY" 1` (or any truthy value you prefer)
+* Update the namespace IDs in `wrangler.toml` per the two above namespaces. For test namespaces, pass `--preview` to the namespace create commands and update the preview IDs as well
+* While you're in wrangler.toml, update the custom domain in `routes[0].pattern` and the unauth redirect url in `vars.REDIR_URL` to your desired values
+* `wrangler dev -r` to test with provided preview namespaces, or `wrangler deploy`
+* Install python3 and python3-requests, then run `DEPLOY_HOST=https://linkie.username.workers.dev AUTH_KEY=$AUTH_KEY python3 test.py` to run tests to ensure linkie is functioning normally. If the script outputs nothing other than `Running on $DEPLOY_HOST`, the tests succeeded.
+* If you want Github Actions to handle deploying and testing, fork this repo, add `AUTH_KEY` as an Actions secret, also create an [API token](https://dash.cloudflare.com/profile/api-tokens) with access to Workers and add another Actions secret as `CF_API_TOKEN`, and finally add a normal Actions variable with `DEPLOY_HOST` as above so the test knows what to hit
 
 Usage
 -----
