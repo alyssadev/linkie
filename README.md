@@ -26,6 +26,8 @@ Deploying
 Usage
 -----
 
+sharex doesn't send files properly, linkie doesn't support it for file uploading. url shortening is fine though
+
 `curl -n -d u=http://example.com linkie/path` will make `http://linkie/path` 302 redirect to the provided url. use .netrc to store the auth username/password (inspired by ix.io). Yes it supports emoji
 
 `curl -n -F "u=@filename.json" linkie/path` now does file uploading to the connected R2 bucket, so that's neat. just don't forget the `u=`
