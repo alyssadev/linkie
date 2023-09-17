@@ -38,7 +38,7 @@ jobs:
           pip install requests
       - name: Test
         env:
-          HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
           AUTH_KEY: ${{ secrets.AUTH_KEY }}
         run:
           python test.py
