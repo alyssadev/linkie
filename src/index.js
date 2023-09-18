@@ -15,7 +15,6 @@ function makeid(length) {
 async function checkAuth(request) {
     const auth = request.headers.get("Authorization");
     const auth_check = await AUTH.get(auth)
-    console.log(auth, auth_check)
     return Boolean(auth_check);
 }
 
@@ -23,20 +22,32 @@ function getHost(request) {
     return request.headers.get("Host")
 }
 
+function create_response(method, body, metadata) {
+    METRICS.writeDataPoint({
+        blobs: [
+            method
+        ],
+        indexes: [
+            metadata.status
+        ]
+    })
+    return new Response(body, metadata)
+}
+
 async function add(request,host,path) {
     const auth = await checkAuth(request)
     if (!auth)
-        return new Response("Only GET requests allowed to unauthed users", {status:403});
+        return create_response(request.method, "Only GET requests allowed to unauthed users", {status:403});
     if (!request.headers.get("content-type"))
-        return new Response("No data provided", {status:400})
-    if (!path) return new Response("No path provided",{status:400})
+        return create_response(request.method, "No data provided", {status:400})
+    if (!path) return create_response(request.method, "No path provided",{status:400})
     if (path === "_") {
         var x = 0
         while (true) {
             path = makeid(4)
             const lookup = await KV.get(path)
             if (!lookup) break
-            if (x >= 5) return new Response("Failed to generate a unique ID in 5 attempts", {status:500});
+            if (x >= 5) return create_response(request.method, "Failed to generate a unique ID in 5 attempts", {status:500});
             x += 1
         }
     }
@@ -45,7 +56,6 @@ async function add(request,host,path) {
     // URL shortening
     const data = await request.formData()
     const dest = data.get("u")
-    console.log(dest)
     try {
         var u = new URL(dest)
         if (u.host !== host) {
@@ -54,29 +64,29 @@ async function add(request,host,path) {
             path = u.pathname.split("/")[1]
         }
         await FILES.delete(path)
-        return new Response(`https://${host}/${path}`, {status:201})
+        return create_response(request.method, `https://${host}/${path}`, {status:201})
     } catch (e) {
         if (e instanceof TypeError) {
-            if (!dest) return new Response("No file provided", {status:400})
+            if (!dest) return create_response(request.method, "No file provided", {status:400})
             await FILES.put(path, dest, { httpMetadata: {contentType: dest.type}})
             await KV.delete(path)
-            return new Response(`https://${host}/${path}`, {status:201})
+            return create_response(request.method, `https://${host}/${path}`, {status:201})
         }
         else throw e;
     };
     
-    return new Response(`No URL or file provided`, {status:400})
+    return create_response(request.method, `No URL or file provided`, {status:400})
 }
 
 async function remove(request,host,path) {
     const auth = await checkAuth(request)
     if (!auth)
-        return new Response("Only GET requests allowed to unauthed users", {status:403});
-    if (!path) return new Response("No path provided",{status:400})
+        return create_response(request.method, "Only GET requests allowed to unauthed users", {status:403});
+    if (!path) return create_response(request.method, "No path provided",{status:400})
     path = path.toLowerCase()
     await KV.delete(path)
     await FILES.delete(path)
-    return new Response(`DELETE https://${host}/${path}`, {status:200})
+    return create_response(request.method, `DELETE https://${host}/${path}`, {status:200})
 }
 
 async function get(request,host,path) {
@@ -85,7 +95,7 @@ async function get(request,host,path) {
         const { keys } = await KV.list()
         let paths = ""
         keys.forEach(element => paths += `${element.name}\n`);
-        return new Response(paths,{status:200})
+        return create_response(request.method, paths,{status:200})
     }
     if (!path) return Response.redirect(REDIR_URL,301)
     path = path.toLowerCase()
@@ -95,11 +105,11 @@ async function get(request,host,path) {
         const headers = new Headers()
         dest_file.writeHttpMetadata(headers)
         headers.set("etag", dest_file.httpEtag)
-        return new Response(dest_file.body, { headers, } )
+        return create_response(request.method, dest_file.body, { headers, } )
     }
     const dest = await KV.get(path)
     if (dest) return Response.redirect(dest, 302)
-    return new Response("Path not found", {status:404})
+    return create_response(request.method, "Path not found", {status:404})
 }
 
 async function handleRequest(request) {
@@ -119,7 +129,7 @@ async function handleRequest(request) {
         case "GET":
             return get(request,host,path)
         default:
-            return new Response("Method not allowed", {status:405})
+            return create_response(request.method, "Method not allowed", {status:405})
     }
 }
 
