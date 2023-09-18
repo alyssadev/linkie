@@ -1,0 +1,20 @@
+#!/bin/bash
+read -r -d '' ASNS <<- EOF
+	8075: microsoft (github)
+EOF
+read -r -d '' SQL <<- EOF
+	SELECT
+		index1 as status_code,
+		blob1 as method,
+		blob2 as country,
+		blob3 as asn,
+		blob4 as timezone,
+		blob5 as timestamp,
+		blob6 as ip
+	FROM METRICS WHERE
+		timestamp != '' and
+		ip != '$LOCAL_IP' and
+		asn != '8075'
+	ORDER BY timestamp
+EOF
+curl -X POST "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/analytics_engine/sql" -H "Authorization: Bearer $CF_API_TOKEN" -d "$SQL" 2>/dev/null | jq '["ret", "verb", "xw", "asn", "timezone        ", "datetime"], ["---","----","--","---","--------        ","--------"],(.data[] | [if .status_code == "" then "200" else .status_code end, .method, .country, .asn, .timezone, .timestamp]) | @tsv' -r | grep -v '2023-09-18T05:20'
