@@ -33,7 +33,8 @@ function create_response(request, body, metadata) {
             request.cf.asn,
             request.cf.timezone,
             new Date().toISOString(),
-            request.headers.get("cf-connecting-ip")
+            request.headers.get("cf-connecting-ip"),
+            request.headers.get("referer")
         ]
     })
     return new Response(body, metadata)
