@@ -31,7 +31,8 @@ function create_response(request, body, metadata) {
             request.method,
             request.cf.country,
             request.cf.asn,
-            request.cf.timezone
+            request.cf.timezone,
+            new Date().toISOString()
         ]
     })
     return new Response(body, metadata)
