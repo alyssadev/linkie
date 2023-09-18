@@ -24,11 +24,14 @@ function getHost(request) {
 
 function create_response(method, body, metadata) {
     METRICS.writeDataPoint({
-        blobs: [
-            method
-        ],
         indexes: [
             metadata.status
+        ],
+        blobs: [
+            method,
+            request.cf.country,
+            request.cf.asn,
+            request.cf.timezone
         ]
     })
     return new Response(body, metadata)
