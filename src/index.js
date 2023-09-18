@@ -74,7 +74,12 @@ async function add(request,host,path) {
     } catch (e) {
         if (e instanceof TypeError) {
             if (!dest) return create_response(request, "No file provided", {status:400})
-            await FILES.put(path, dest, { httpMetadata: {contentType: dest.type}})
+            await FILES.put(path, dest, {
+                httpMetadata: {
+                    contentType: dest.type,
+                    contentDisposition: `inline; filename="${dest.name}"`
+                }
+            })
             await KV.delete(path)
             return create_response(request, `https://${host}/${path}`, {status:201})
         }
@@ -110,6 +115,12 @@ async function get(request,host,path) {
     if (dest_file) {
         const headers = new Headers()
         dest_file.writeHttpMetadata(headers)
+        const md = dest_file.httpMetadata
+        // bug with browsers not displaying valid text/ documents inline
+        if (request.headers.get("user-agent").startsWith("Mozilla/") && md.contentType.startsWith("text/")) {
+            headers.set("Content-Type", "text/plain")
+            headers.set("Content-Disposition", `${md.contentDisposition}; type=${md.contentType}`)
+        }
         headers.set("etag", dest_file.httpEtag)
         return create_response(request, dest_file.body, { headers, } )
     }
