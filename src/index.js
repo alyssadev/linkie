@@ -58,8 +58,8 @@ async function add(request,host,path) {
     } catch (e) {
         if (e instanceof TypeError) {
             if (!dest) return new Response("No file provided", {status:400})
-            await FILES.put(path, dest)
-            await KV.put(path,dest.type)
+            await FILES.put(path, dest, { httpMetadata: {contentType: dest.type}})
+            await KV.delete(path)
             return new Response(`https://${host}/${path}`, {status:201})
         }
         else throw e;
@@ -92,16 +92,9 @@ async function get(request,host,path) {
 
     const dest_file = await FILES.get(path)
     if (dest_file) {
-        const mime = await KV.get(path)
         const headers = new Headers()
         dest_file.writeHttpMetadata(headers)
         headers.set("etag", dest_file.httpEtag)
-        if (mime.startsWith("text/")) {
-            headers.set("content-type", "text/plain")
-            headers.set("x-content-type", mime)
-        } else {
-            headers.set("content-type", mime)
-        }
         return new Response(dest_file.body, { headers, } )
     }
     const dest = await KV.get(path)

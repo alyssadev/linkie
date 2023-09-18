@@ -1,0 +1,3 @@
+#!/bin/bash
+MIME=$(file -i "$1" | cut -f1 -d" " --complement)
+curl -H "Authorization: $AUTH_KEY" $DEPLOY_HOST/$2 -F "u=@$1;type=$MIME"
