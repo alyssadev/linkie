@@ -18,21 +18,15 @@ read -r -d '' SQL <<- EOF
 		asn != '8075'
 	ORDER BY timestamp
 EOF
-# yeah i know this looks dumb but isn't it easy to understand?
 read -r -d '' JQ <<- EOF
-["ret","verb","xw","asn","timezone        ","datetime                ","referer"],
-["---","----","--","---","--------        ","--------                ","-------"],
-(
-	.data[] |
-	[
- if .status_code == "" then "200" else .status_code end,
-       .method,
-              .country,
-                   .asn,
-                         .timezone,
-                                            .timestamp,
-                                                                       .referer
-	]
-) | @tsv
+.data[] | [
+	if .status_code == "" then "200" else .status_code end,
+	.method,
+	.country,
+	.asn,
+	.timezone,
+	.timestamp,
+	.ip,
+	.referer ] | @tsv
 EOF
-curl -X POST "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/analytics_engine/sql" -H "Authorization: Bearer $CF_API_TOKEN" -d "$SQL" 2>/dev/null | jq "$JQ" -r | grep -v '2023-09-18T05:20'
+curl -X POST "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/analytics_engine/sql" -H "Authorization: Bearer $CF_API_TOKEN" -d "$SQL" 2>/dev/null | jq "$JQ" -r | grep -v '2023-09-18T05:20' | column -tN "ret,verb,xw,asn,tz,ts,ip,ref"
