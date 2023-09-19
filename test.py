@@ -22,16 +22,11 @@ try:
     
     # unauth requests to auth methods
     reqs = put(host),post(host),delete(host)
-    assert all(req.status_code == 403 for req in reqs) # unauth requests to auth methods
+    assert all(req.status_code == 401 for req in reqs) # unauth requests to auth methods
     
     # auth put wo data
     req = put(host + "/devtestpath",data={},headers=auth)
     assert req.status_code == 400 # auth put wo data
-    
-#    # auth put invalid url
-#    req = put(host + "/devtestpath",data={"u": "golf sale"},headers=auth)
-#    assert req.status_code == 400 # auth put invalid url
-#    # invalid urls would now be stored as files instead
     
     # auth put wo path
     req = put(host,data={"u": "http://www.example.com"},headers=auth)

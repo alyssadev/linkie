@@ -1,5 +1,17 @@
 // vim: tabstop=4 shiftwidth=4 expandtab
 
+async function isAsciiFile(buf) {
+    var isAscii = true;
+    const view = new Uint8Array(buf)
+    for (var i=0, len=view.byteLength; i<len; i++) {
+        if (view[i] > 127) {
+            isAscii=false
+            break
+        }
+    }
+    return isAscii
+}
+
 function makeid(length) {
     let result = '';
     const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -15,6 +27,7 @@ function makeid(length) {
 async function checkAuth(request) {
     const auth = request.headers.get("Authorization");
     const auth_check = await AUTH.get(auth)
+    console.log(auth, auth_check)
     return Boolean(auth_check);
 }
 
@@ -23,27 +36,35 @@ function getHost(request) {
 }
 
 function create_response(request, body, metadata) {
-    METRICS.writeDataPoint({
-        indexes: [
-            metadata.status
-        ],
-        blobs: [
-            request.method,
-            request.cf.country,
-            request.cf.asn,
-            request.cf.timezone,
-            new Date().toISOString(),
-            request.headers.get("cf-connecting-ip"),
-            request.headers.get("referer")
-        ]
-    })
+    try {
+        METRICS.writeDataPoint({
+            indexes: [
+                metadata.status
+            ],
+            blobs: [
+                request.method,
+                request.cf.country,
+                request.cf.asn,
+                request.cf.timezone,
+                new Date().toISOString(),
+                request.headers.get("cf-connecting-ip"),
+                request.headers.get("referer")
+            ]
+        })
+    } catch (e) {
+        // Metrics disabled
+        if (!(e instanceof ReferenceError)) {
+            throw e
+        }
+    }
+
     return new Response(body, metadata)
 }
 
 async function add(request,host,path) {
     const auth = await checkAuth(request)
     if (!auth)
-        return create_response(request, "Only GET requests allowed to unauthed users", {status:403});
+        return create_response(request, "Auth required", {status:401,headers:{"www-authenticate":"Basic"}});
     if (!request.headers.get("content-type"))
         return create_response(request, "No data provided", {status:400})
     if (!path) return create_response(request, "No path provided",{status:400})
@@ -59,7 +80,7 @@ async function add(request,host,path) {
     }
     path = path.toLowerCase()
 
-    // URL shortening
+    const req_clone = request.clone()
     const data = await request.formData()
     const dest = data.get("u")
     try {
@@ -74,10 +95,18 @@ async function add(request,host,path) {
     } catch (e) {
         if (e instanceof TypeError) {
             if (!dest) return create_response(request, "No file provided", {status:400})
+            const buf = await req_clone.arrayBuffer()
+            var name = dest.name
+            var type = dest.type
+            if (!name || !type) {
+                const is_ascii = await isAsciiFile(buf)
+                if (!name) name = is_ascii ? "paste.txt" : "paste.bin"
+                if (!type) type = is_ascii ? "text/plain" : "application/octet-stream"
+            }
             await FILES.put(path, dest, {
                 httpMetadata: {
-                    contentType: dest.type,
-                    contentDisposition: `inline; filename="${dest.name}"`
+                    contentType: type,
+                    contentDisposition: `inline; filename="${name}"`
                 }
             })
             await KV.delete(path)
@@ -92,7 +121,7 @@ async function add(request,host,path) {
 async function remove(request,host,path) {
     const auth = await checkAuth(request)
     if (!auth)
-        return create_response(request, "Only GET requests allowed to unauthed users", {status:403});
+        return create_response(request, "Auth required", {status:401,headers:{"www-authenticate":"Basic"}});
     if (!path) return create_response(request, "No path provided",{status:400})
     path = path.toLowerCase()
     await KV.delete(path)
